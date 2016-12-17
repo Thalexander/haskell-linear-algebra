@@ -19,3 +19,7 @@ scalarMult k (Vector (a,b,c)) = Vector (k*a, k*b, k*c)
 
 magnitude :: Vector -> Double
 magnitude (Vector (a, b, c)) = (a ** 2 + b ** 2 + c ** 2) ** 0.5
+
+normalise :: Vector -> Vector
+normalise v@(Vector (a,b,c)) = Vector (a/mag, b/mag, c/mag)
+    where mag = magnitude v
