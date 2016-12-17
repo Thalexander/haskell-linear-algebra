@@ -29,3 +29,5 @@ normalise v@(Vector (a,b,c))
 dot :: Vector -> Vector -> Double
 dot (Vector (a,b,c)) (Vector (x,y,z)) = a*x + b*y + c*z
 
+angle :: Vector -> Vector -> Double
+angle a b = acos $ (dot a b) / ((magnitude a) * (magnitude b))
