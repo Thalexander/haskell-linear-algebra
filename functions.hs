@@ -21,5 +21,7 @@ magnitude :: Vector -> Double
 magnitude (Vector (a, b, c)) = (a ** 2 + b ** 2 + c ** 2) ** 0.5
 
 normalise :: Vector -> Vector
-normalise v@(Vector (a,b,c)) = Vector (a/mag, b/mag, c/mag)
+normalise v@(Vector (a,b,c))
+    | mag == 0 = error "Cannot normalise the zero vector"
+    | otherwise = Vector (a/mag, b/mag, c/mag)
     where mag = magnitude v
