@@ -31,3 +31,12 @@ dot (Vector (a,b,c)) (Vector (x,y,z)) = a*x + b*y + c*z
 
 angle :: Vector -> Vector -> Double
 angle a b = acos $ (dot a b) / ((magnitude a) * (magnitude b))
+
+parallel :: Vector -> Vector -> Bool
+parallel a b
+    | magnitude a == 0 && magnitude b == 0 = True
+    | magnitude a == 0 || magnitude b == 0 = False
+    | otherwise = normalise a == normalise b
+    
+orthogonal :: Vector -> Vector -> Bool
+orthogonal a b = (dot a b) == 0
