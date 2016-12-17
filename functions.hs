@@ -39,7 +39,7 @@ parallel a b
     | otherwise = normalise a == normalise b
     
 orthogonal :: Vector -> Vector -> Bool
-orthogonal a b = (dot a b) == 0
+orthogonal a b = nearEqual (dot a b) 0
 
 componentParallel :: Vector -> Vector -> Vector
 componentParallel v basis = scalarMult (dot v (normalise basis)) (normalise basis)
@@ -56,12 +56,38 @@ areaTriangle a b = (0.5 *) . magnitude $ a * b
 first :: Vector -> Double
 first (Vector (a,_,_)) = a
 
+nearEqual a b = a - b >= -10**(-10) && a-b <= 10**(-10)
+
 data Plane = Plane Vector Double
     deriving (Ord, Read, Show)
     
 instance Eq Plane where
-    (Plane v d) == (Plane q e) = parallel (scalarMult (1/d) v) (scalarMult (1/e) q)
+    p@(Plane f m) == q@(Plane g n) 
+        | f == (Vector (0,0,0)) && g == (Vector (0,0,0)) = m == n
+        | f == (Vector (0,0,0)) || g == (Vector (0,0,0)) = False
+        | otherwise = orthogonal v f && orthogonal v g
+            where Vector (a,b,c) = getPoint p
+                  Vector (x,y,z) = getPoint q
+                  v       = Vector (a-x,b-y,c-z)
 
 on :: Vector -> Plane -> Bool
 on v (Plane direction k) = (dot v direction) == k
 
+firstNonZero :: Vector -> Maybe (Double, Int)
+firstNonZero (Vector (a,b,c))
+    | a /= 0 = Just (a, 0)
+    | b /= 0 = Just (b, 1)
+    | c /= 0 = Just (c, 2)
+    | otherwise = Nothing
+    
+getPoint :: Plane -> Vector
+getPoint (Plane v d)
+        | firstNonZero v == Nothing = error "No valid point"
+        | snd nonZero == 0 = Vector (d/coefficient,0,0)
+        | snd nonZero == 1 = Vector (0,d/coefficient,0)
+        | snd nonZero == 2 = Vector (0,0,d/coefficient)
+    where Just nonZero = firstNonZero v
+          coefficient = fst nonZero
+          
+planeParallel :: Plane -> Plane -> Bool
+planeParallel (Plane v _) (Plane q _) = parallel v q
