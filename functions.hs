@@ -46,3 +46,9 @@ componentParallel v basis = scalarMult (dot v (normalise basis)) (normalise basi
 
 componentOrthogonal :: Vector -> Vector -> Vector
 componentOrthogonal v basis = (v -) $ componentParallel v basis
+
+areaParallelogram :: Vector -> Vector -> Double
+areaParallelogram a b = magnitude $ a * b
+
+areaTriangle :: Vector -> Vector -> Double
+areaTriangle a b = (0.5 *) . magnitude $ a * b
