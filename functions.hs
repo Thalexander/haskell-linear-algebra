@@ -14,3 +14,8 @@ instance Num Vector where
     signum (Vector (a,b,c)) = Vector (signum a, signum b, signum c)
     fromInteger a = Vector (fromInteger a, fromInteger a, fromInteger a)
     
+scalarMult :: Double -> Vector -> Vector
+scalarMult k (Vector (a,b,c)) = Vector (k*a, k*b, k*c)
+
+magnitude :: Vector -> Double
+magnitude (Vector (a, b, c)) = (a ** 2 + b ** 2 + c ** 2) ** 0.5
