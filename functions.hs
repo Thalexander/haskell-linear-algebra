@@ -40,3 +40,9 @@ parallel a b
     
 orthogonal :: Vector -> Vector -> Bool
 orthogonal a b = (dot a b) == 0
+
+componentParallel :: Vector -> Vector -> Vector
+componentParallel v basis = scalarMult (dot v (normalise basis)) (normalise basis)
+
+componentOrthogonal :: Vector -> Vector -> Vector
+componentOrthogonal v basis = (v -) $ componentParallel v basis
