@@ -25,3 +25,7 @@ normalise v@(Vector (a,b,c))
     | mag == 0 = error "Cannot normalise the zero vector"
     | otherwise = Vector (a/mag, b/mag, c/mag)
     where mag = magnitude v
+    
+dot :: Vector -> Vector -> Double
+dot (Vector (a,b,c)) (Vector (x,y,z)) = a*x + b*y + c*z
+
