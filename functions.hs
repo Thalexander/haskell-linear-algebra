@@ -3,7 +3,7 @@ module LinearAlgebra
 where
 
 newtype Vector = Vector (Double,Double,Double)
-    deriving (Eq,Ord, Read, Show)
+    deriving (Eq, Ord, Read, Show)
     
 instance Num Vector where
     (Vector (a,b,c)) + (Vector (x,y,z)) = Vector (a+x,b+y,c+z) 
@@ -52,3 +52,16 @@ areaParallelogram a b = magnitude $ a * b
 
 areaTriangle :: Vector -> Vector -> Double
 areaTriangle a b = (0.5 *) . magnitude $ a * b
+
+first :: Vector -> Double
+first (Vector (a,_,_)) = a
+
+data Plane = Plane Vector Double
+    deriving (Ord, Read, Show)
+    
+instance Eq Plane where
+    (Plane v d) == (Plane q e) = parallel (scalarMult (1/d) v) (scalarMult (1/e) q)
+
+on :: Vector -> Plane -> Bool
+on v (Plane direction k) = (dot v direction) == k
+
