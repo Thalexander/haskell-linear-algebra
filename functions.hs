@@ -1,3 +1,7 @@
+module LinearAlgebra
+
+where
+
 newtype Vector = Vector (Double,Double,Double)
     deriving (Eq,Ord, Read, Show)
     
