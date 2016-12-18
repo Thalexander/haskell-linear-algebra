@@ -95,6 +95,9 @@ planeParallel (Plane v _) (Plane q _) = parallel v q
 multPlane :: Plane -> Double -> Plane
 multPlane (Plane v d) mult = Plane (scalarMult mult v) (d * mult)
 
+addPlanes :: Plane -> Plane -> Plane
+addPlanes (Plane v d) (Plane q e) = Plane (v + q) (d+ e)
+
 type LinearSystem = [Plane]
 
 swap' :: LinearSystem -> Plane -> Plane -> LinearSystem
@@ -111,3 +114,7 @@ multRow :: LinearSystem -> Double -> Int -> LinearSystem
 multRow system multiplier row = map (\x -> if x == rowPlane then multPlane x multiplier else x) system
     where rowPlane = system !! row
 
+addRows :: LinearSystem -> Int -> Int -> LinearSystem
+addRows system a b = map (\x -> if x == rowA then addPlanes rowA rowB else x) system
+    where rowA = system !! a
+          rowB = system !! b
