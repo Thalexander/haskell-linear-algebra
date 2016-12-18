@@ -91,3 +91,23 @@ getPoint (Plane v d)
           
 planeParallel :: Plane -> Plane -> Bool
 planeParallel (Plane v _) (Plane q _) = parallel v q
+
+multPlane :: Plane -> Double -> Plane
+multPlane (Plane v d) mult = Plane (scalarMult mult v) (d * mult)
+
+type LinearSystem = [Plane]
+
+swap' :: LinearSystem -> Plane -> Plane -> LinearSystem
+swap' [] _ _ = []
+swap' (x:xs) a b
+    | x == a = b : swap' xs a b
+    | x == b = a : swap' xs a b
+    | otherwise = x : swap' xs a b
+
+swap :: LinearSystem -> Int -> Int -> LinearSystem
+swap m a b = swap' m (m !! a) (m !! b)
+
+multRow :: LinearSystem -> Double -> Int -> LinearSystem
+multRow system multiplier row = map (\x -> if x == rowPlane then multPlane x multiplier else x) system
+    where rowPlane = system !! row
+
