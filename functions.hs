@@ -118,3 +118,11 @@ addRows :: LinearSystem -> Int -> Int -> LinearSystem
 addRows system a b = map (\x -> if x == rowA then addPlanes rowA rowB else x) system
     where rowA = system !! a
           rowB = system !! b
+          
+addPlaneToRow :: LinearSystem -> Plane -> Int -> LinearSystem
+addPlaneToRow system plane row = map (\x -> if x == rowPlane then addPlanes x plane else x) system
+    where rowPlane = system !! row
+
+addMultiple :: LinearSystem -> Double -> Int -> Int -> LinearSystem
+addMultiple system mult a b = addPlaneToRow system plane a
+    where plane = multPlane (system !! b) mult
