@@ -59,6 +59,9 @@ first (Vector (a,_,_)) = a
 nearEqual :: Double -> Double -> Bool
 nearEqual a b = a - b >= -10**(-10) && a-b <= 10**(-10)
 
+notNearZero :: Double -> Bool
+notNearZero a = not $ nearEqual a 0
+
 data Plane = Plane Vector Double
     deriving (Ord, Read, Show)
     
@@ -157,10 +160,10 @@ coefficient system row pos = getVectorPos v pos
 
 clearBelow :: LinearSystem -> Int -> LinearSystem
 clearBelow (_:[]) _ = [] 
-clearBelow system pos = addMultiple system mult 1 0
+clearBelow system@(x:(y:ys)) pos = (addMultiple system mult 1 0 !! 1) : clearBelow (x:ys) pos
     where coX  = coefficient system 0 pos
           coY  = coefficient system 1 pos
-          mult = - (coX / coY)
+          mult = - (coY / coX)
     
 reduceRowsBelow :: LinearSystem -> Int -> LinearSystem
 reduceRowsBelow system@(x:_) pos = x : clearBelow system pos
@@ -170,8 +173,8 @@ reduceColumn [] _ = []
 reduceColumn system@(x:_) pos
     | pos >= 3 = system
     | nonZeroRow == Nothing = reduceColumn system (pos + 1)
-    | c == 0 = reduceColumn newSystem pos
-    | otherwise = x : clearBelow system pos
+    | nearEqual c 0 = reduceColumn newSystem pos
+    | otherwise = x : reduceColumn (clearBelow system pos) (pos + 1)
     where c = coefficient system 0 pos
           nonZeroRow     = makeNonZeroRow system 0 pos
           Just newSystem = nonZeroRow
@@ -186,7 +189,11 @@ nonZeroValues (Plane v _)
 
 simplifySystem :: LinearSystem -> LinearSystem
 simplifySystem []     = []
-simplifySystem (x:[]) = x:[]
+simplifySystem system@(x:[]) = (multPlane x (1 / coX)):[]
+    where Plane v _   = x
+          Just index' = firstNonZero v
+          index       = snd index'
+          coX         = coefficient system 0 index
 simplifySystem system@(x:xs)
     | nonZeroValues x == False = x : simplifySystem xs
     | otherwise                = (multPlane x (1 / coX)) : (simplifySystem $ clearBelow system index)
@@ -203,9 +210,10 @@ data SystemSolution = Infinite | Unique Vector | None
     deriving (Eq, Ord, Show, Read)
 
 contradictoryEquations :: LinearSystem -> Bool
+contradictoryEquations [] = False
 contradictoryEquations (x@(Plane _ d):xs)
-    | nonZeroValues x == False && nearEqual d 0 = True
-    | otherwise                                 = contradictoryEquations xs
+    | nonZeroValues x == False && not (nearEqual d 0) = True
+    | otherwise                                       = contradictoryEquations xs
     
 pivots :: LinearSystem -> Int
 pivots [] = 0
@@ -214,7 +222,7 @@ pivots (x@(Plane v _):xs)
     | otherwise                 = 1 + pivots xs
 
 tooFewPivots :: LinearSystem -> Bool
-tooFewPivots = (< 3) . foldr (\(Plane v _) acc -> if firstNonZero v == Nothing then 0 + acc else acc) 0
+tooFewPivots = (< 3) . pivots
 
 constantTerm :: Plane -> Double
 constantTerm (Plane _ d) = d
