@@ -159,7 +159,7 @@ clearBelow (_:[]) _ = []
 clearBelow system pos = addMultiple system mult 1 0
     where coX  = coefficient system 0 pos
           coY  = coefficient system 1 pos
-          mult = coX / coY
+          mult = - (coX / coY)
     
 reduceRowsBelow :: LinearSystem -> Int -> LinearSystem
 reduceRowsBelow system@(x:_) pos = x : clearBelow system pos
