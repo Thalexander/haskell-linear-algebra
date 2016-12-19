@@ -126,3 +126,54 @@ addPlaneToRow system plane row = map (\x -> if x == rowPlane then addPlanes x pl
 addMultiple :: LinearSystem -> Double -> Int -> Int -> LinearSystem
 addMultiple system mult a b = addPlaneToRow system plane a
     where plane = multPlane (system !! b) mult
+    
+firstNonZeroRow :: LinearSystem -> Int -> Int -> Maybe Int
+firstNonZeroRow [] _ _ = Nothing
+firstNonZeroRow system@((Plane v d):xs) row pos
+    | nonZero == Nothing = Nothing
+    | (snd value) /= pos = firstNonZeroRow xs (row + 1) pos
+    | otherwise = Just row
+    where nonZero    = firstNonZero v
+          Just value = nonZero
+
+makeNonZeroRow :: LinearSystem -> Int -> Int -> Maybe LinearSystem
+makeNonZeroRow system row pos
+    | firstRow == Nothing = Nothing
+    | otherwise = Just $ swap system row swapRow
+    where firstRow = firstNonZeroRow system row pos
+          Just swapRow = firstRow
+
+getVectorPos :: Vector -> Int -> Double
+getVectorPos (Vector (a,b,c)) pos
+    | pos == 0 = a
+    | pos == 1 = b
+    | pos == 2 = c
+    | otherwise = error "Invalid position"
+
+coefficient :: LinearSystem -> Int -> Int -> Double
+coefficient system row pos = getVectorPos v pos
+    where (Plane v _) = system !! row 
+
+clearBelow :: LinearSystem -> Int -> LinearSystem
+clearBelow (_:[]) _ = [] 
+clearBelow system pos = addMultiple system mult 1 0
+    where coX  = coefficient system 0 pos
+          coY  = coefficient system 1 pos
+          mult = coX / coY
+    
+reduceRowsBelow :: LinearSystem -> Int -> LinearSystem
+reduceRowsBelow system@(x:_) pos = x : clearBelow system pos
+
+reduceColumn :: LinearSystem -> Int -> LinearSystem
+reduceColumn [] _ = []
+reduceColumn system@(x:_) pos
+    | pos >= 3 = system
+    | nonZeroRow == Nothing = reduceColumn system (pos + 1)
+    | c == 0 = reduceColumn newSystem pos
+    | otherwise = x : clearBelow system pos
+    where c = coefficient system 0 pos
+          nonZeroRow     = makeNonZeroRow system 0 pos
+          Just newSystem = nonZeroRow
+    
+triangularForm :: LinearSystem -> LinearSystem
+triangularForm system = reduceColumn system 0
