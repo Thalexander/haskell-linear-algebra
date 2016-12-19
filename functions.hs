@@ -177,3 +177,23 @@ reduceColumn system@(x:_) pos
     
 triangularForm :: LinearSystem -> LinearSystem
 triangularForm system = reduceColumn system 0
+
+nonZeroValues :: Plane -> Bool
+nonZeroValues (Plane v _)
+    | firstNonZero v == Nothing = False
+    | otherwise                 = True
+
+simplifySystem :: LinearSystem -> LinearSystem
+simplifySystem []     = []
+simplifySystem (x:[]) = x:[]
+simplifySystem system@(x:xs)
+    | nonZeroValues x == False = x : simplifySystem xs
+    | otherwise                = (multPlane x (1 / coX)) : (simplifySystem $ clearBelow system index)
+    where Plane v _   = x
+          Just index' = firstNonZero v
+          index       = snd index'
+          coX         = coefficient system 0 index
+
+rref :: LinearSystem -> LinearSystem
+rref system = simplifySystem $ triangular
+    where triangular = reverse $ triangularForm system
