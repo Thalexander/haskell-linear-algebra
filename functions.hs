@@ -56,6 +56,7 @@ areaTriangle a b = (0.5 *) . magnitude $ a * b
 first :: Vector -> Double
 first (Vector (a,_,_)) = a
 
+nearEqual :: Double -> Double -> Bool
 nearEqual a b = a - b >= -10**(-10) && a-b <= 10**(-10)
 
 data Plane = Plane Vector Double
@@ -195,5 +196,35 @@ simplifySystem system@(x:xs)
           coX         = coefficient system 0 index
 
 rref :: LinearSystem -> LinearSystem
-rref system = simplifySystem $ triangular
+rref system = reverse $ simplifySystem $ triangular
     where triangular = reverse $ triangularForm system
+    
+data SystemSolution = Infinite | Unique Vector | None
+    deriving (Eq, Ord, Show, Read)
+
+contradictoryEquations :: LinearSystem -> Bool
+contradictoryEquations (x@(Plane _ d):xs)
+    | nonZeroValues x == False && nearEqual d 0 = True
+    | otherwise                                 = contradictoryEquations xs
+    
+pivots :: LinearSystem -> Int
+pivots [] = 0
+pivots (x@(Plane v _):xs)
+    | firstNonZero v == Nothing = 0 + pivots xs
+    | otherwise                 = 1 + pivots xs
+
+tooFewPivots :: LinearSystem -> Bool
+tooFewPivots = (< 3) . foldr (\(Plane v _) acc -> if firstNonZero v == Nothing then 0 + acc else acc) 0
+
+constantTerm :: Plane -> Double
+constantTerm (Plane _ d) = d
+
+findUniqueSolution :: LinearSystem -> Vector
+findUniqueSolution (x:(y:(z:_))) = Vector (constantTerm x, constantTerm y, constantTerm z)
+    
+solveSystem :: LinearSystem -> SystemSolution
+solveSystem system 
+    | contradictoryEquations rrefSystem = None
+    | tooFewPivots rrefSystem           = Infinite
+    | otherwise                         = Unique $ findUniqueSolution rrefSystem
+    where rrefSystem = rref system
