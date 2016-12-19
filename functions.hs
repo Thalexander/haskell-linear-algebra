@@ -1,4 +1,4 @@
-module LinearAlgebra
+module LinearAlgebra 
 
 where
 
@@ -56,6 +56,7 @@ areaTriangle a b = (0.5 *) . magnitude $ a * b
 first :: Vector -> Double
 first (Vector (a,_,_)) = a
 
+-- An alternative to == which accounts for floating point errors
 nearEqual :: Double -> Double -> Bool
 nearEqual a b = a - b >= -10**(-10) && a-b <= 10**(-10)
 
@@ -102,8 +103,10 @@ multPlane (Plane v d) mult = Plane (scalarMult mult v) (d * mult)
 addPlanes :: Plane -> Plane -> Plane
 addPlanes (Plane v d) (Plane q e) = Plane (v + q) (d+ e)
 
+-- A list of Planes that constructs a system so it can be used to find the solutions to where the planes meet
 type LinearSystem = [Plane]
 
+-- Helper function for swap
 swap' :: LinearSystem -> Plane -> Plane -> LinearSystem
 swap' [] _ _ = []
 swap' (x:xs) a b
@@ -111,9 +114,11 @@ swap' (x:xs) a b
     | x == b = a : swap' xs a b
     | otherwise = x : swap' xs a b
 
+-- Swap two rows in the LinearSystem
 swap :: LinearSystem -> Int -> Int -> LinearSystem
 swap m a b = swap' m (m !! a) (m !! b)
 
+-- Multiply a row in the LinearSystem
 multRow :: LinearSystem -> Double -> Int -> LinearSystem
 multRow system multiplier row = map (\x -> if x == rowPlane then multPlane x multiplier else x) system
     where rowPlane = system !! row
@@ -140,6 +145,7 @@ firstNonZeroRow system@((Plane v d):xs) row pos
     where nonZero    = firstNonZero v
           Just value = nonZero
 
+-- Swaps rows around to ensure the pos in the LinearSystem is non zero
 makeNonZeroRow :: LinearSystem -> Int -> Int -> Maybe LinearSystem
 makeNonZeroRow system row pos
     | firstRow == Nothing = Nothing
@@ -158,6 +164,7 @@ coefficient :: LinearSystem -> Int -> Int -> Double
 coefficient system row pos = getVectorPos v pos
     where (Plane v _) = system !! row 
 
+-- Reduce the values below the first row in a position to 0, returns the LinearSystem without the first row
 clearBelow :: LinearSystem -> Int -> LinearSystem
 clearBelow (_:[]) _ = [] 
 clearBelow system@(x:(y:ys)) pos = (addMultiple system mult 1 0 !! 1) : clearBelow (x:ys) pos
@@ -165,6 +172,7 @@ clearBelow system@(x:(y:ys)) pos = (addMultiple system mult 1 0 !! 1) : clearBel
           coY  = coefficient system 1 pos
           mult = - (coY / coX)
     
+-- Alternate version of clearBelow that returns with the first row
 reduceRowsBelow :: LinearSystem -> Int -> LinearSystem
 reduceRowsBelow system@(x:_) pos = x : clearBelow system pos
 
@@ -179,6 +187,7 @@ reduceColumn system@(x:_) pos
           nonZeroRow     = makeNonZeroRow system 0 pos
           Just newSystem = nonZeroRow
     
+-- Converts LinearSystem to triangular form
 triangularForm :: LinearSystem -> LinearSystem
 triangularForm system = reduceColumn system 0
 
@@ -187,6 +196,7 @@ nonZeroValues (Plane v _)
     | firstNonZero v == Nothing = False
     | otherwise                 = True
 
+-- Change leading values in each row to 1 and reduces values in the same position below it to 0
 simplifySystem :: LinearSystem -> LinearSystem
 simplifySystem []     = []
 simplifySystem system@(x:[]) = (multPlane x (1 / coX)):[]
@@ -202,13 +212,16 @@ simplifySystem system@(x:xs)
           index       = snd index'
           coX         = coefficient system 0 index
 
+-- Converts to reduced row echelon format
 rref :: LinearSystem -> LinearSystem
 rref system = reverse $ simplifySystem $ triangular
     where triangular = reverse $ triangularForm system
-    
+ 
+-- Number of solutions to a LinearSystem, if Unique has the vector that satisfies it, in future the Infinite solution could contain the parameterised solution   
 data SystemSolution = Infinite | Unique Vector | None
     deriving (Eq, Ord, Show, Read)
 
+-- Finds if a LinearSystem in RREF has contradictory equations of the form 0 = k
 contradictoryEquations :: LinearSystem -> Bool
 contradictoryEquations [] = False
 contradictoryEquations (x@(Plane _ d):xs)
@@ -221,15 +234,18 @@ pivots (x@(Plane v _):xs)
     | firstNonZero v == Nothing = 0 + pivots xs
     | otherwise                 = 1 + pivots xs
 
+-- Finds if a LinearSystem in RREF has too few pivots to have a unique solution
 tooFewPivots :: LinearSystem -> Bool
 tooFewPivots = (< 3) . pivots
 
 constantTerm :: Plane -> Double
 constantTerm (Plane _ d) = d
 
+-- Helper function for solveSystem, requires input to be in RREF
 findUniqueSolution :: LinearSystem -> Vector
 findUniqueSolution (x:(y:(z:_))) = Vector (constantTerm x, constantTerm y, constantTerm z)
-    
+ 
+-- Finds if there are infinite solutions, none, or a unique solution to a LinearSystem   
 solveSystem :: LinearSystem -> SystemSolution
 solveSystem system 
     | contradictoryEquations rrefSystem = None
